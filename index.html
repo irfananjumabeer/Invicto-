@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IUT-ian & Publician মিশন ট্র্যাকার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --main-dark: #1B3C53;
+    --card-base: #234C6A;
+    --accent-blue: #456882;
+    --sand-text: #D2C1B6;
+    
+    --bg-overlay: transparent;
+    --card-bg: rgba(35, 76, 106, 0.65);
+    --card-hover: rgba(69, 104, 130, 0.45);
+    --border-color: rgba(210, 193, 182, 0.25);
+    --text-main: #f1f3f9;
+    --text-muted: #ced4da;
+    --text-muted2: #a8b2bd;
+    --accent: #D2C1B6;
+    
+    --phy: #456882;
+    --chem: #00d68f;
+    --bio: #ff3d71;
+    --math: #ffaa00;
+    --mistake: #ff3d71;
+    --glass-blur: 16px;
+  }
+
+  /* PREMIUM THEMES */
+  body.theme-default { background: #1B3C53; }
+  body.theme-deepdark { background: #0a0f14; --card-bg: #131a22; --border-color: #243142; }
+  body.theme-nothing { background: #0d0d0d; --card-bg: #161616; --border-color: #333; --accent: #ff0055; font-family: 'IBM Plex Mono', sans-serif; }
+  body.theme-ios { background: linear-gradient(135deg, #0f1c26, #1B3C53); --card-bg: rgba(255,255,255,0.04); --border-color: rgba(255,255,255,0.12); --glass-blur: 25px; }
+  body.theme-forest { background: linear-gradient(145deg, #0b1a10, #142d1e); --card-bg: rgba(20, 45, 30, 0.6); --border-color: rgba(140, 185, 155, 0.25); --accent: #8cb99b; }
+  body.theme-stars { background: #080b11; --card-bg: rgba(20, 26, 40, 0.7); }
+
+  * { box-sizing: border-box; transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease; }
+  html, body { margin: 0; padding: 0; color: var(--text-main); font-family: 'Inter', 'Noto Sans Bengali', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  
+  .wrap { max-width: 740px; margin: 0 auto; padding: 20px 14px 60px; position: relative; z-index: 1; }
+  #canvas-overlay { position: fixed; top:0; left:0; width:100%; height:100%; z-index:-1; pointer-events:none; }
+
+  /* CARD STYLING */
+  .card-style {
+    background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px;
+    padding: 20px; margin-bottom: 20px; backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  }
+  .card-style:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+  header { text-align: center; margin-bottom: 15px; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--sand-text); font-weight: 700; text-transform: uppercase; }
+  h1 { font-family: 'Newsreader', serif; font-weight: 700; font-size: 30px; margin: 6px 0; color: #fff; }
+  .dream-text { font-size: 13.5px; color: var(--sand-text); font-weight: 600; margin-bottom: 10px; }
+  
+  .motto-top { font-family: 'Newsreader', serif; font-style: italic; font-size: 20px; color: #fff; text-align: center; margin-bottom: 25px; letter-spacing: 1px; opacity: 0.9; }
+  .motto-bottom { font-family: 'Newsreader', serif; font-style: italic; font-size: 22px; color: var(--sand-text); text-align: center; margin: 25px 0 15px; letter-spacing: 1px; font-weight: 600; }
+
+  /* FLOATING BUTTONS */
+  .floating-btn {
+    position: fixed; right: 20px; width: 45px; height: 45px; 
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 999; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .floating-btn svg { width: 22px; height: 22px; fill: var(--text-main); }
+  #openPanelBtn { top: 20px; }
+  #openTimerBtn { top: 75px; }
+  #openPanelBtn:hover svg { transform: rotate(90deg); transition: transform 0.4s; }
+
+  /* SIDE PANELS */
+  .side-panel {
+    position: fixed; top: 0; right: -320px; width: 320px; height: 100%;
+    background: rgba(15, 23, 36, 0.98); border-left: 1px solid var(--border-color);
+    z-index: 1000; padding: 25px 20px; display: flex; flex-direction: column; gap: 15px;
+    box-shadow: -5px 0 25px rgba(0,0,0,0.5); transition: right 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+    overflow-y: auto; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  }
+  .side-panel.open { right: 0; }
+  .side-panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+  .close-panel { cursor: pointer; font-size: 22px; color: var(--text-muted); }
+  
+  .theme-menu-list { display: flex; flex-direction: column; gap: 6px; }
+  .theme-menu-item { padding: 10px; font-size: 12.5px; border-radius: 8px; cursor: pointer; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); }
+  .theme-menu-item.active { border-color: #00d68f; background: rgba(255,255,255,0.12); }
+
+  /* CALENDAR STYLING */
+  .cal-container { margin-top: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; border: 1px solid var(--border-color); }
+  .cal-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--sand-text); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 11px; }
+  .cal-day-label { font-weight: bold; color: var(--text-muted2); }
+  .cal-cell { padding: 5px 0; border-radius: 4px; background: rgba(255,255,255,0.02); }
+  .cal-cell.today { background: #00d68f; color: #000; font-weight: bold; }
+
+  /* MECHANICAL WATCH INTERFACE */
+  .watch-wrapper { display: flex; flex-direction: column; align-items: center; margin: 20px 0; }
+  .mechanical-watch {
+    width: 160px; height: 160px; border-radius: 50%; border: 6px solid #ced4da;
+    background: radial-gradient(circle, #234C6A 30%, #131a22 100%); position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 8px 16px rgba(0,0,0,0.4);
+  }
+  .watch-center { width: 10px; height: 10px; background: #ffaa00; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; }
+  .watch-hand {
+    position: absolute; bottom: 50%; left: 50%; transform-origin: bottom center;
+    background: #ff3d71; width: 3px; height: 65px; border-radius: 2px; transform: rotate(0deg); transition: transform 0.1s linear;
+  }
+  .watch-ticks { position: absolute; width: 100%; height: 100%; top: 0; left: 0; font-size: 10px; color: rgba(255,255,255,0.4); }
+  .pomo-group { display: flex; gap: 6px; justify-content: center; width: 100%; }
+  .pomo-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .pomo-btn:hover { background: var(--accent-blue); }
+  .timer-actions { display: flex; gap: 8px; width: 100%; margin-top: 5px; }
+  .timer-actions button { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+  /* DASHBOARD DESIGN */
+  .intro-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 12px; color: var(--text-muted); }
+  .intro-item span { color: var(--text-main); font-weight: 600; }
+
+  /* PERSISTENT COUNTDOWN */
+  .countdown-box { background: linear-gradient(135deg, rgba(69, 104, 130, 0.25), rgba(27, 60, 83, 0.4)); border: 1px solid var(--border-color); border-radius: 14px; padding: 15px; text-align: center; margin-bottom: 20px; }
+  .timer-display { font-size: 18px; font-weight: 700; color: #ff3d71; letter-spacing: 0.5px; margin-top: 5px; }
+  .countdown-config { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; }
+  .countdown-config select, .countdown-config input { background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 6px; color: #fff; padding: 6px; font-size: 12px; }
+  .countdown-config button { background: #00d68f; border: none; color: #000; padding: 7px; font-weight: 600; border-radius: 6px; cursor: pointer; font-size: 12px; }
+
+  .dash-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 15px; margin-bottom: 20px; }
+  @media(max-width: 550px){ .dash-grid { grid-template-columns: 1fr; } }
+  
+  .ring-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring {
+    width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(var(--accent) calc(var(--pct) * 1%), var(--border-color) 0); position: relative; margin-bottom: 10px;
+  }
+  .ring::before { content: ""; position: absolute; width: 80px; height: 80px; border-radius: 50%; background: #1B3C53; }
+  body.theme-deepdark .ring::before { background: #131a22; }
+  body.theme-nothing .ring::before { background: #161616; }
+  body.theme-forest .ring::before { background: #142d1e; }
+  .ring-label { position: relative; font-weight: 600; font-size: 22px; color: #fff; }
+
+  .hours-box { display: flex; flex-direction: column; justify-content: center; }
+  .hours-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .hours-input-row input { background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; padding: 6px 10px; width: 70px; text-align: center; font-size: 14px; }
+  .hours-input-row button { background: var(--accent-blue); color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
+  .hours-bar-track { height: 8px; background: var(--border-color); border-radius: 4px; margin-top: 10px; overflow: hidden; }
+  .hours-bar-fill { height: 100%; background: #00d68f; width: 0%; }
+
+  .subject-bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .sbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; }
+  .sbar-top { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12.5px; }
+  .sbar-track { height: 4px; border-radius: 2px; background: var(--border-color); overflow: hidden; }
+  .sbar-fill { height: 100%; }
+
+  /* ACCORDION SYSTEM */
+  .book { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
+  .book-head { display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer; user-select: none; }
+  .book-head:hover { background: var(--card-hover); }
+  .arrow-icon { width: 16px; height: 16px; color: var(--text-muted2); display: inline-block; transition: transform 0.2s ease; transform: rotate(0deg); }
+  .book.open .arrow-icon { transform: rotate(90deg); }
+  .book-title { flex: 1; }
+  .book-title .name { font-weight: 600; font-size: 14.5px; }
+  .book-title .count { font-size: 11.5px; color: var(--text-muted2); }
+  .chapters { display: none; background: rgba(0,0,0,0.12); }
+  .book.open .chapters { display: block; }
+  .chrow-wrapper { border-top: 1px solid var(--border-color); padding: 12px 14px; }
+  .chrow { display: flex; align-items: center; gap: 10px; }
+  .chname { flex: 1; font-size: 13.5px; }
+  .chname.done { color: var(--text-muted2); text-decoration: line-through; opacity: 0.5; }
+  
+  .tags { display: inline-flex; gap: 4px; margin-left: 6px; }
+  .tag { font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 4px; background: rgba(255,255,255,0.1); color: var(--text-muted2); }
+  .tag.hot { background: rgba(255, 170, 0, 0.15); color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.3); }
+
+  .toggles { display: flex; gap: 4px; }
+  .tbtn { border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); font-size: 11px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+  .tbtn:hover { border-color: var(--text-muted); }
+  .tbtn.active.c-btn { background: #456882; color: #fff; border-color: transparent; }
+  .tbtn.active.p-btn { background: #00d68f; color: #000; border-color: transparent; }
+  
+  /* RED MISTAKE COLOR APPLIED */
+  .tbtn.active.m-btn { background: var(--mistake) !important; color: #fff !important; border-color: transparent !important; }
+
+  .note-area { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #ced4da; font-size: 12px; padding: 8px; margin-top: 10px; resize: none; font-family: inherit; display: block; }
+  .settings-panel { margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+  .settings-title { font-size: 13px; font-weight: 600; color: var(--text-muted2); cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); padding: 8px 12px; border-radius: 8px; }
+  .settings-content { display: none; padding: 12px; background: rgba(0,0,0,0.15); margin-top: 5px; border-radius: 8px; text-align: center; }
+  .settings-panel.open .settings-content { display: block; }
+  footer { margin-top: 20px; font-size: 11.5px; color: var(--text-muted2); text-align: center; }
+  .reset-link { color: var(--mistake); border: 1px solid rgba(255,61,113,0.3); background: rgba(255,61,113,0.05); cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-top: 8px; display: inline-block; }
+</style>
+</head>
+<body class="theme-default">
+<canvas id="canvas-overlay"></canvas>
+
+<!-- FLOATING TRIGGER GEAR -->
+<div class="floating-btn" id="openPanelBtn" title="ইঞ্জিন কনফিগারেশন">
+  <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87c-0.12,0.21-0.06,0.47,0.11,0.61l2.03,1.58C4.84,11.36,4.8,11.67,4.8,12c0,0.33,0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+</div>
+
+<!-- FLOATING MECHANICAL TIMER TRIGGER -->
+<div class="floating-btn" id="openTimerBtn" title="মেকানিক্যাল স্টপওয়াচ">
+  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14H11V10H13V16zm0-8H11V6H13V8z"/></svg>
+</div>
+
+<!-- SIDE ENGINE CONFIG PANEL -->
+<div class="side-panel bn" id="sidePanel">
+  <div class="side-panel-header">
+    <span style="font-weight:600; font-size:15px;">⚙️ ইঞ্জিন কনফিগারেশন</span>
+    <span class="close-panel" id="closePanelBtn">&times;</span>
+  </div>
+  <div style="font-size:12px; color:var(--text-muted2); margin-bottom:5px;">প্রিমিয়াম ডার্ক শেড থিম:</div>
+  <div class="theme-menu-list" id="themeMenuList"></div>
+  <div style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:12px;">
+      <span>অ্যানিমেশন ইফেক্ট</span>
+      <input type="checkbox" id="animToggle">
+    </div>
+    <span style="font-weight:600; font-size:14px; color:var(--sand-text);">📅 স্টাডি ক্যালেন্ডার</span>
+    <div class="cal-container" id="sideCalendar"></div>
+  </div>
+</div>
+
+<!-- IN-APP MECHANICAL TIMER SIDE PANEL -->
+<div class="side-panel bn" id="timerPanel">
+  <div class="side-panel-header">
+    <span style="font-weight:600; font-size:15px;">⏱️ মেকানিক্যাল স্টাডি ওয়াচ</span>
+    <span class="close-panel" id="closeTimerPanelBtn">&times;</span>
+  </div>
+  
+  <div class="watch-wrapper">
+    <div class="mechanical-watch">
+      <div class="watch-center"></div>
+      <div class="watch-hand" id="mechanicalHand"></div>
+    </div>
+    <div id="panelTimerDisplay" style="font-size:24px; font-weight:bold; margin-top:12px; font-family:'IBM Plex Mono',monospace; color:#00d68f;">00:00:00</div>
+  </div>
+
+  <div class="pomo-group">
+    <button class="pomo-btn" data-mins="25">⏱️ ২৫ মি. পোমোডোরো</button>
+    <button class="pomo-btn" data-mins="50">⏱️ ৫০ মি. পোমোডোরো</button>
+  </div>
+  
+  <div style="font-size:11px; color:var(--text-muted2); text-align:center; margin-top:5px;">* সর্বোচ্চ একটানা ৫ ঘণ্টা সেশন লিমিট। প্রতি ১-২ ঘণ্টা পর রিমাইন্ডার দেওয়া হবে।</div>
+
+  <div class="timer-actions">
+    <button id="timerStartStopBtn" style="background:#00d68f; color:#000;">শুরু করো</button>
+    <button id="timerResetBtn" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid var(--border-color);">রিসেট</button>
+  </div>
+</div>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+  var SUBJECTS = [
+    { key: 'phy', name: 'পদার্থবিজ্ঞান', accent: '#456882', books: [
+        { id: 'phy1', label: '১ম পত্র', chapters: [
+          { n: 'ভৌত জগৎ ও পরিমাপ', t: ['RU'] }, { n: 'ভেক্টর', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'গতিবিদ্যা', t: ['SUST', 'MIST', 'IUT'] }, { n: 'নিউটনীয় বলবিদ্যা', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'কাজ, শক্তি ও ক্ষমতা', t: ['MIST', 'IUT', 'RU'] }, { n: 'মহাকর্ষ ও অভিকর্ষ', t: ['SUST', 'RU'] },
+          { n: 'পদার্থের গাঠনিক ধর্ম', t: ['MIST', 'RU'] }, { n: 'পর্যাবৃত্ত গতি', t: ['SUST', 'IUT'] },
+          { n: 'তরঙ্গ', t: ['SUST', 'RU'] }, { n: 'আদর্শ গ্যাস ও গতিতত্ত্ব', t: ['SUST', 'MIST', 'IUT'], hot: true }
+        ]},
+        { id: 'phy2', label: '২য় পত্র', chapters: [
+          { n: 'তাপগতিবিদ্যা', t: ['SUST', 'IUT', 'MIST'], hot: true }, { n: 'স্থির তড়িৎ', t: ['MIST', 'IUT'] },
+          { n: 'চল তড়িৎ', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'তড়িৎ প্রবাহের চৌম্বক ক্রিয়া', t: ['MIST', 'IUT'] },
+          { n: 'তাড়িতচৌম্বকীয় আবেশ ও AC', t: ['IUT'] }, { n: 'জ্যামিতিক আলোকবিজ্ঞান', t: ['RU', 'MIST'] },
+          { n: 'ভৌত আলোকবিজ্ঞান', t: ['SUST'] }, { n: 'আধুনিক পদার্থবিজ্ঞানের সূচনা', t: ['SUST', 'MIST', 'IUT'], hot: true },
+          { n: 'পরমাণুর মডেল ও নিউক্লিয়ার', t: ['SUST', 'RU'] }, { n: 'সেমিকন্ডাক্টর ও ইলেকট্রনিক্স', t: ['RU', 'MIST'] }, { n: 'জ্যেატიর্বিজ্ঞান', t: [] }
+        ]}
+      ]
+    },
+    { key: 'chem', name: 'রসায়ন', accent: '#00d68f', books: [
+        { id: 'chem1', label: '১ম পত্র', chapters: [
+          { n: 'ল্যাবরেটরির নিরাপদ ব্যবহার', t: ['RU'] }, { n: 'गुणগত রসায়ন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'মৌলের পর্যায়বৃত্ত ধর্ম ও বন্ধন', t: ['SUST', 'IUT', 'RU'], hot: true }, { n: 'রাসায়নিক পরিবর্তন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'कर्मমুখী রসায়ন', t: ['RU'] }
+        ]},
+        { id: 'chem2', label: '২য় পত্র', chapters: [
+          { n: 'পরিবেশ রসায়ন', t: ['SUST', 'MIST', 'RU'] }, { n: 'জৈব রসায়ন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'পরিমাণগত রসায়ন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'তড়িৎ রসায়ন', t: ['MIST', 'IUT'] }, { n: 'অর্থনৈতিক রসায়ন', t: [] }
+        ]}
+      ]
+    },
+{ key: 'math', name: 'উচ্চতর গণিত', accent: '#ffaa00', books: [
+      { id: 'math1', label: '১ম পত্র', chapters: [
+        { n: 'ম্যাট্রিক্স ও নির্ণায়ক', t: ['MIST', 'RU'] }, { n: 'ভেক্টর', t: ['RU'] },
+        { n: 'সরলরেখা', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'বৃত্ত', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+        { n: 'বিন্যাস ও সমাবেশ', t: ['SUST', 'IUT', 'RU'] }, { n: 'ত্রিকোণমিতিক অনুপাত', t: [] },
+        { n: 'সংযুক্ত কোণের ত্রিকোণমিতি', t: ['SUST', 'MIST', 'IUT', 'RU'] }, { n: 'ফাংশন ও লেখচিত্র', t: ['SUST', 'IUT'] },
+        { n: 'অন্তরীকরণ', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'যোগজীকরণ', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }
+      ]},
+      { id: 'math2', label: '২য় পত্র', chapters: [
+        { n: 'বাস্তব সংখ্যা ও অসমতা', t: ['RU'] }, { n: 'যোগাশ্রয়ী প্রোগ্রাম', t: [] }, 
+        { n: 'জটিল সংখ্যা', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, /* FIXED BANGLA TYPO HERE */
+        { n: 'বহুপদী ও সমীকরণ', t: ['SUST', 'MIST', 'RU'], hot: true }, { n: 'দ্বিপদী বিস্তৃতি', t: ['RU'] },
+        { n: 'কনিক', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'বিপরীত ত্রিকোণমিতি', t: ['MIST', 'IUT'] },
+        { n: 'স্থিতিবিদ্যা', t: ['SUST', 'MIST', 'IUT'], hot: true }, { n: 'গতিবিদ্যা', t: ['SUST', 'MIST', 'IUT'], hot: true },
+        { n: 'বিস্তার পরিমাপ ও সম্ভাবনা', t: ['SUST', 'IUT'] }
+      ]}
+    ]
+  },
+  { key: 'bio', name: 'জীববিজ্ঞান', accent: '#ff3d71', books: [
+      { id: 'bio1', label: '১ম পত্র', chapters: [
+        { n: 'কোষ ও এর গঠন', t: ['RU'] }, { n: 'কোষ বিভাজন', t: ['RU'] }, { n: 'কোষ রসায়ন', t: [] }, { n: 'অণুজীব', t: ['RU'] },
+        { n: 'শৈবাল ও ছত্রাক', t: [] }, { n: 'ব্রায়োফাইটা', t: [] }, { n: 'নগ্নবীজী ও আবৃতবীজী', t: ['RU'] }, { n: 'টিস্যু ও টিস্যুতন্ত্র', t: ['RU'] },
+        { n: 'উদ্ভিদ শারীরতত্ত্ব', t: ['RU', 'SUST'], hot: true }, { n: 'উদ্ভিদ প্রজনন', t: [] }, { n: 'জীবপ্রযুক্তি', t: ['SUST'] }, { n: 'পরিবেশ ও সংরক্ষণ', t: [] }
+      ]},
+      { id: 'bio2', label: '২য় পত্র', chapters: [
+        { n: 'প্রাণীর বিভিন্নতা', t: ['RU'] }, { n: 'প্রাণীর পরিচিতি', t: ['RU'], hot: true }, { n: 'পরিপাক ও শোষণ', t: ['RU'] },
+        { n: 'রক্ত ও সংবহন', t: ['RU'], hot: true }, { n: 'শ্বসন ও শ্বাসক্রিয়া', t: [] }, { n: 'বর্জ্য ও নিষ্কাশন', t: [] },
+        { n: 'চলন ও অঙ্গচালনা', t: ['RU'] }, { n: 'সমন্বয় ও নিয়ন্ত্রণ', t: ['RU'] }, { n: 'মানব জীবনের ধারাবাহিকতা', t: [] },
+        { n: 'মানবদেহের প্রতিরক্ষা', t: ['RU'] }, { n: 'জিনতত্ত্ব ও বিবর্তন', t: ['RU', 'SUST'], hot: true }, { n: 'প্রাণীর আচরণ', t: [] }
+      ]}
+    ]
+  }
+];
+
+var THEMES = [
+  { id: 'default', name: '🌌 Color Hunt (Original Main)' },
+  { id: 'deepdark', name: '🖤 Deep Velvet Black' },
+  { id: 'nothing', name: '📱 Nothing OS Dark' },
+  { id: 'ios', name: '🍎 iOS Midnight Glass' },
+  { id: 'forest', name: '🌲 Deep Night Forest (New)' },
+  { id: 'stars', name: '🌠 Falling Stars Universe' }
+];
+
+var STORAGE_KEY = 'hsc_unbeatable_v7_final';
+var progress = {}; 
+var openBooks = { 'phy1': true };
+var studyHours = 0;
+var currentTheme = 'default';
+var animationsEnabled = true;
+var settingsOpen = false;
+
+var targetExamName = "IUT Admission";
+var targetExamDate = "2026-12-05T09:00";
+
+// Persistent App Timer Settings
+var timerRunning = false;
+var timerStartTime = 0; 
+var timerDuration = 0; 
+var lastAlertHour = 0;
+var timerTickerInterval = null;
+
+var canvas, ctx, animationFrameId;
+var meteors = [];
+
+function chapterKey(bookId, idx){ return bookId + '-' + idx; }
+function getState(bookId, idx){ return progress[chapterKey(bookId, idx)] || { c:false, p:false, m:false, note:'' }; }
+
+function setState(bookId, idx, field, value){
+  var k = chapterKey(bookId, idx);
+  if(!progress[k]) progress[k] = { c:false, p:false, m:false, note:'' };
+  progress[k][field] = value;
+  saveToStorage();
+}
+
+function saveToStorage(){
+  var data = { 
+    progress: progress, studyHours: studyHours, theme: currentTheme, 
+    anim: animationsEnabled, openBooks: openBooks,
+    targetExamName: targetExamName, targetExamDate: targetExamDate,
+    timerRunning: timerRunning, timerStartTime: timerStartTime, timerDuration: timerDuration,
+    lastAlertHour: lastAlertHour
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getStats(){
+  var totalCheckpoints = 75 * 2; var clearedCheckpoints = 0; var totalMistakes = 0;
+  SUBJECTS.forEach(function(s){
+    s.books.forEach(function(b){
+      b.chapters.forEach(function(_, i){
+        var st = getState(b.id, i);
+        if(st.c) clearedCheckpoints++; if(st.p) clearedCheckpoints++; if(st.m) totalMistakes++;
+      });
+    });
+  });
+  return { pct: totalCheckpoints ? (clearedCheckpoints / totalCheckpoints * 100) : 0, mistakes: totalMistakes };
+}
+
+function subjectProgress(subj){
+  var total = 0, current = 0;
+  subj.books.forEach(function(b){
+    total += b.chapters.length * 2;
+    b.chapters.forEach(function(_, i){
+      var st = getState(b.id, i); if(st.c) current++; if(st.p) current++;
+    });
+  });
+  return total ? (current / total * 100) : 0;
+}
+
+/* CANVAS METEORS */
+function initCanvas() {
+  canvas = document.getElementById('canvas-overlay'); if(!canvas) return;
+  ctx = canvas.getContext('2d');
+  window.addEventListener('resize', resizeCanvas); resizeCanvas(); setupMeteors(); animateCanvas();
+}
+function resizeCanvas() { if(canvas) { canvas.width = window.innerWidth; canvas.height = window.innerHeight; } }
+function setupMeteors() { meteors = []; for(var i=0; i<12; i++) { meteors.push(createMeteor()); } }
+function createMeteor() { return { x: Math.random() * window.innerWidth, y: Math.random() * -window.innerHeight, length: Math.random() * 80 + 40, speed: Math.random() * 4 + 3, opacity: Math.random() * 0.6 + 0.2 }; }
+function animateCanvas() {
+  if(!canvas || !ctx) return; ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if(animationsEnabled && currentTheme === 'stars') {
+    for(var i=0; i<meteors.length; i++) {
+      var m = meteors[i]; ctx.beginPath();
+      var gradient = ctx.createLinearGradient(m.x, m.y, m.x - m.length, m.y + m.length);
+      gradient.addColorStop(0, 'rgba(255,255,255,' + m.opacity + ')'); gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = gradient; ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - m.length, m.y + m.length); ctx.stroke();
+      m.x -= m.speed; m.y += m.speed;
+      if(m.y > window.innerHeight || m.x < 0) { meteors[i] = createMeteor(); meteors[i].x = Math.random() * (window.innerWidth + 200); meteors[i].y = -50; }
+    }
+  }
+  animationFrameId = requestAnimationFrame(animateCanvas);
+}
+
+function updateCountdown() {
+  var timerEl = document.getElementById('live-timer'); if(!timerEl) return;
+  var diff = new Date(targetExamDate).getTime() - new Date().getTime();
+  if (isNaN(diff) || diff <= 0) { timerEl.innerHTML = "🎯 মিশন সম্পন্ন হয়েছে!"; return; }
+  var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  var secs = Math.floor((diff % (1000 * 60)) / 1000);
+  timerEl.innerHTML = days + " দিন " + hours + " ঘণ্টা " + mins + " মিনিট " + secs + " সেকেন্ড";
+}
+
+/* PERSISTENT APP TIMER LOGIC */
+function startTimer(durationInSeconds) {
+  timerRunning = true;
+  timerStartTime = Date.now();
+  timerDuration = durationInSeconds;
+  lastAlertHour = 0;
+  saveToStorage();
+  runTimerTicker();
+}
+
+function runTimerTicker() {
+  if(timerTickerInterval) clearInterval(timerTickerInterval);
+  timerTickerInterval = setInterval(function(){
+    if(!timerRunning) { clearInterval(timerTickerInterval); return; }
+    
+    var elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+    var remaining = timerDuration - elapsed;
+
+    // 5 Hours Force Cap LImit
+    if(elapsed >= 18000 || remaining <= 0) {
+      timerRunning = false; clearInterval(timerTickerInterval);
+      alert("🛑 ৫ ঘণ্টা অতিক্রান্ত অথবা সেশন শেষ! টাইমার স্বয়ংক্রিয়ভাবে বন্ধ হয়েছে।");
+      timerDuration = 0; timerStartTime = 0; saveToStorage(); updateTimerUI(); return;
+    }
+
+    // Hydration and Break Alert Notifications every hour
+    var currentHourElapsed = Math.floor(elapsed / 3600);
+    if(currentHourElapsed > lastAlertHour) {
+      lastAlertHour = currentHourElapsed;
+      saveToStorage();
+      alert("💧 রিমাইন্ডার: একটানা পড়া হচ্ছে! একটু পানি খেয়ে নিন (Stay Hydrated) এবং চোখের বিশ্রামের জন্য ৫ মিনিটের ব্রেক নিন।");
+    }
+
+    updateTimerUI();
+  }, 250);
+}
+
+function updateTimerUI() {
+  var display = document.getElementById('panelTimerDisplay');
+  var hand = document.getElementById('mechanicalHand');
+  var btn = document.getElementById('timerStartStopBtn');
+  if(!display) return;
+
+  var totalSecs = 0;
+  if(timerRunning) {
+    var elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+    totalSecs = Math.max(0, timerDuration - elapsed);
+  } else {
+    totalSecs = timerDuration;
+  }
+
+  var hrs = Math.floor(totalSecs / 3600);
+  var mins = Math.floor((totalSecs % 3600) / 60);
+  var secs = totalSecs % 60;
+  display.innerHTML = (hrs<10?'0':'')+hrs + ":" + (mins<10?'0':'')+mins + ":" + (secs<10?'0':'')+secs;
+
+  if(hand) {
+    var rotation = (secs / 60) * 360;
+    hand.style.transform = 'rotate(' + rotation + 'deg)';
+  }
+  if(btn) { btn.innerHTML = timerRunning ? "থামাও" : "শুরু করো"; }
+}
+
+/* MINI CALENDAR ENGINE */
+function renderCalendar() {
+  var cal = document.getElementById('sideCalendar'); if(!cal) return;
+  var now = new Date(); var year = now.getFullYear(); var month = now.getMonth();
+  var monthNames = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var firstDay = new Date(year, month, 1).getDay();
+
+  var html = '<div class="cal-header"><span>'+monthNames[month]+' '+year+'</span></div>';
+  html += '<div class="cal-grid">';
+  var labels = ["র", "সো", "ম", "বু", "বৃ", "শু", "শ"];
+  labels.forEach(function(l){ html += '<div class="cal-day-label">'+l+'</div>'; });
+  for(var i=0; i<firstDay; i++) { html += '<div></div>'; }
+  for(var d=1; d<=daysInMonth; d++) {
+    var isToday = (d === now.getDate()) ? ' today' : '';
+    html += '<div class="cal-cell'+isToday+'">'+d+'</div>';
+  }
+  html += '</div>';
+  cal.innerHTML = html;
+}
+
+function render(){
+  var app = document.getElementById('app'); var stats = getStats(); var hourPct = Math.min((studyHours / 8) * 100, 100);
+  document.body.className = 'theme-' + currentTheme;
+  
+  var container = document.getElementById('themeMenuList');
+  if(container) {
+    var thtml = ''; THEMES.forEach(function(t){ thtml += '<div class="theme-menu-item'+(currentTheme===t.id?' active':'')+'" data-theme-id="'+t.id+'">'+t.name+'</div>'; });
+    container.innerHTML = thtml;
+  }
+
+  var html = '<div class="motto-top">“Know where you stand”</div>';
+  html += '<header><div class="eyebrow">Target: Public University & Engineering 2026</div><h1 class="bn">মিশন IUT-ian ও পাবলিকিয়ান ট্র্যাকার</h1><div class="dream-text bn">🎯 লক্ষ্য: কঠোর প্র্যাকটিসের মাধ্যমে নিজের সেরা ক্যাম্পাসে একটি সিট নিশ্চিত করা!</div></header>';
+
+  html += '<div class="card-style bn"><div class="intro-grid"><div class="intro-item">🎯 ডেইলি গোল: <span>৮ ঘণ্টা</span></div><div class="intro-item">📚 ভুল খাতা রেকর্ড: <span>' + stats.mistakes + 'টি চ্যাপ্টার</span></div></div></div>';
+
+  // COUNTDOWN BOX WITH MULTIPLE OPTIONS
+  html += '<div class="countdown-box bn">⏳ <strong style="color:var(--sand-text);">' + targetExamName + '</strong> কাউন্টডাউন:<div id="live-timer" class="timer-display mono">হিসাব করা হচ্ছে...</div>';
+  html += '<div class="countdown-config"><select id="presetExamSelect"><option value="">-- প্রি-সেট পরীক্ষা সিলেক্ট করো --</option><option value="IUT Admission|2026-12-05T09:00">IUT Admission Test</option><option value="MIST Admission|2026-12-25T10:00">MIST Admission Test</option><option value="BUET Preliminary|2027-01-15T10:00">BUET Preliminary</option></select>';
+  html += '<input type="text" id="customExamName" placeholder="পরীক্ষার নাম" value="'+targetExamName+'"><input type="datetime-local" id="customExamDate" value="'+targetExamDate+'"><button id="startCountdownBtn">🚀 Start / Update Countdown</button></div></div>';
+
+  // METRICS
+  html += '<div class="dash-grid"><div class="card-style ring-wrapper"><div class="ring" style="--pct:'+stats.pct.toFixed(1)+'"><div class="ring-label mono">'+Math.round(stats.pct)+'%</div></div><div class="bn" style="font-size:12.5px; color:var(--text-muted2);">সর্বমোট সিলেবাস সম্পন্ন</div></div>';
+  html += '<div class="card-style hours-box bn">⏱️ <strong>আজকের স্টাডি আওয়ার:</strong><div style="font-size: 13px; color: var(--text-muted); margin-top:3px;">পড়া হয়েছে: <span class="mono" style="color:#00d68f; font-size:16px; font-weight:bold;">'+studyHours+'</span> / ৮ ঘণ্টা</div><div class="hours-bar-track"><div class="hours-bar-fill" style="width: '+hourPct+'%"></div></div><div class="hours-input-row"><input type="number" id="hoursInput" min="0" max="24" placeholder="ঘণ্টা"><button id="saveHoursBtn">আপডেট</button></div></div></div>';
+
+  // SUBJECT OVERVIEW
+  html += '<div class="subject-bars bn">';
+  SUBJECTS.forEach(function(s){ var p = subjectProgress(s); html += '<div class="sbar"><div class="sbar-top"><span>'+s.name+'</span><span class="mono">'+Math.round(p)+'%</span></div><div class="sbar-track"><div class="sbar-fill" style="width:'+p.toFixed(1)+'%; background:'+s.accent+'"></div></div></div>'; });
+  html += '</div>';
+
+  // BOOK ACCORDIONS
+  SUBJECTS.forEach(function(subj){
+    subj.books.forEach(function(book){
+      var isOpen = !!openBooks[book.id]; var doneCount = 0;
+      book.chapters.forEach(function(_, i){ var st = getState(book.id, i); if(st.c && st.p) doneCount++; });
+
+      html += '<div class="book'+(isOpen?' open':'')+'"><div class="book-head" data-book-id="'+book.id+'"><span class="arrow-icon">▶</span><div class="book-title bn"><div class="name">'+subj.name+' — '+book.label+'</div><div class="count mono">'+doneCount+' / '+book.chapters.length+'টি কমপ্লিট</div></div></div>';
+      html += '<div class="chapters">';
+      book.chapters.forEach(function(ch, idx){
+        var st = getState(book.id, idx); var isDone = st.c && st.p;
+        html += '<div class="chrow-wrapper"><div class="chrow"><span class="chname bn'+(isDone?' done':'')+'">'+ch.n;
+        if(ch.t.length>0 || ch.hot){ html += '<span class="tags">'; if(ch.hot) html += '<span class="tag hot">🎯 High Priority</span>'; ch.t.forEach(function(tName){ html += '<span class="tag">'+tName+'</span>'; }); html += '</span>'; }
+        html += '</span><div class="toggles bn">';
+        html += '<button class="tbtn c-btn'+(st.c?' active':'')+'" data-book-id="'+book.id+'" data-idx="'+idx+'" data-field="c">ক্লাস</button>';
+        html += '<button class="tbtn p-btn'+(st.p?' active':'')+'" data-book-id="'+book.id+'" data-idx="'+idx+'" data-field="p">অনুশীলন</button>';
+        html += '<button class="tbtn m-btn'+(st.m?' active':'')+'" data-book-id="'+book.id+'" data-idx="'+idx+'" data-field="m">📓 ভুল খাতা</button>';
+        html += '</div></div><textarea class="note-area" data-book-id="'+book.id+'" data-idx="'+idx+'" placeholder="নোট রাখুন...">'+(st.note || '')+'</textarea></div>';
+      });
+      html += '</div></div>';
+    });
+  });
+
+  html += '<div class="settings-panel'+(settingsOpen?' open':'')+' bn"><div class="settings-title" id="toggleSettingsBtn">⚠️ ডাটা সেফটি প্যানেল <span>▼</span></div><div class="settings-content"><button class="reset-link" id="resetBtn">সব প্রগ্রেস সম্পূর্ণ মুছুন</button></div></div>';
+  html += '<div class="motto-bottom">“One chapter closer”</div><footer class="bn"><div>💥 পরিশ্রম কখনো বৃথা যায় না। কীপ পুশিং!</div></footer>';
+  
+  app.innerHTML = html; attachHandlers();
+}
+  
+function attachHandlers(){
+  document.querySelectorAll('.book-head').forEach(function(h){ h.addEventListener('click', function(){ var id = h.getAttribute('data-book-id'); openBooks[id] = !openBooks[id]; saveToStorage(); render(); }); });
+  document.querySelectorAll('.tbtn').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); var bId = b.getAttribute('data-book-id'); var idx = parseInt(b.getAttribute('data-idx'), 10); var field = b.getAttribute('data-field'); var cur = getState(bId, idx); setState(bId, idx, field, !cur[field]); render(); }); });
+  document.querySelectorAll('.note-area').forEach(function(ta){ ta.addEventListener('blur', function(){ var bId = ta.getAttribute('data-book-id'); var idx = parseInt(ta.getAttribute('data-idx'), 10); setState(bId, idx, 'note', ta.value); }); });
+
+  var presetSelect = document.getElementById('presetExamSelect');
+  if(presetSelect) { presetSelect.addEventListener('change', function(){ if(presetSelect.value) { var parts = presetSelect.value.split('|'); document.getElementById('customExamName').value = parts[0]; document.getElementById('customExamDate').value = parts[1]; } }); }
+  var startCdBtn = document.getElementById('startCountdownBtn');
+  if(startCdBtn) { startCdBtn.addEventListener('click', function(){ var nameInput = document.getElementById('customExamName').value.trim(); var dateInput = document.getElementById('customExamDate').value; if(nameInput && dateInput) { targetExamName = nameInput; targetExamDate = dateInput; saveToStorage(); render(); } }); }
+  
+  var tsBtn = document.getElementById('toggleSettingsBtn'); if(tsBtn) { tsBtn.addEventListener('click', function(){ settingsOpen = !settingsOpen; render(); }); }
+  var hoursBtn = document.getElementById('saveHoursBtn'); if(hoursBtn) { hoursBtn.addEventListener('click', function(){ studyHours = Math.max(0, parseFloat(document.getElementById('hoursInput').value) || 0); saveToStorage(); render(); }); }
+  var rBtn = document.getElementById('resetBtn'); if(rBtn){ rBtn.addEventListener('click', function(){ if(confirm('রিসেট করতে চাও?')){ progress = {}; studyHours = 0; localStorage.removeItem(STORAGE_KEY); render(); } }); }
+}
+
+function initGlobalPanels() {
+  var sidePanel = document.getElementById('sidePanel'); var timerPanel = document.getElementById('timerPanel');
+  document.getElementById('openPanelBtn').addEventListener('click', function(){ sidePanel.classList.add('open'); timerPanel.classList.remove('open'); });
+  document.getElementById('closePanelBtn').addEventListener('click', function(){ sidePanel.classList.remove('open'); });
+  document.getElementById('openTimerBtn').addEventListener('click', function(){ timerPanel.classList.add('open'); sidePanel.classList.remove('open'); updateTimerUI(); });
+  document.getElementById('closeTimerPanelBtn').addEventListener('click', function(){ timerPanel.classList.remove('open'); });
+
+  document.getElementById('themeMenuList').addEventListener('click', function(e) {
+    var item = e.target.closest('.theme-menu-item'); if(item) { currentTheme = item.getAttribute('data-theme-id'); saveToStorage(); render(); }
+  });
+  document.getElementById('animToggle').addEventListener('change', function(e){ animationsEnabled = e.target.checked; saveToStorage(); });
+
+  // MECHANICAL PANEL WATCH INTERACTION
+  document.querySelectorAll('.pomo-btn').forEach(function(pb){
+  pb.addEventListener('click', function(){
+  var mins = parseInt(pb.getAttribute('data-mins'), 10);
+  startTimer(mins * 60);
+  });
+  });
+  
+  document.getElementById('timerStartStopBtn').addEventListener('click', function(){
+  if(timerRunning) { timerRunning = false; var elapsed = Math.floor((Date.now() - timerStartTime) / 1000); timerDuration = Math.max(0, timerDuration - elapsed); saveToStorage(); updateTimerUI(); }
+  else { if(timerDuration <= 0) timerDuration = 25 * 60; startTimer(timerDuration); }
+  });
+  document.getElementById('timerResetBtn').addEventListener('click', function(){ timerRunning = false; timerDuration = 0; timerStartTime = 0; saveToStorage(); updateTimerUI(); });
+  }
+  
+  function init(){
+  try {
+  var stored = localStorage.getItem(STORAGE_KEY);
+  if(stored){
+  var parsed = JSON.parse(stored); progress = parsed.progress || {}; studyHours = parsed.studyHours || 0; currentTheme = parsed.theme || 'default';
+  if(parsed.anim !== undefined) animationsEnabled = parsed.anim; if(parsed.openBooks !== undefined) openBooks = parsed.openBooks;
+  if(parsed.targetExamName !== undefined) targetExamName = parsed.targetExamName; if(parsed.targetExamDate !== undefined) targetExamDate = parsed.targetExamDate;
+  if(parsed.timerRunning !== undefined) timerRunning = parsed.timerRunning; if(parsed.timerStartTime !== undefined) timerStartTime = parsed.timerStartTime;
+  if(parsed.timerDuration !== undefined) timerDuration = parsed.timerDuration; if(parsed.lastAlertHour !== undefined) lastAlertHour = parsed.lastAlertHour;
+  }
+  } catch(e) {}
+  render(); initGlobalPanels(); renderCalendar(); initCanvas();
+  if(timerRunning) { runTimerTicker(); } else { updateTimerUI(); }
+  setInterval(updateCountdown, 1000);
+  }
+  init();
+  })();
+  </script>
+  </body>
+  </html>
