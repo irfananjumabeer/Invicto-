@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IUT-ian & Publician মিশন ট্র্যাকার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #080a10;
+    --card: #121624;
+    --card-hover: #192035;
+    --border: #222b45;
+    --text: #f1f3f9;
+    --muted: #8f9bb3;
+    --muted2: #566380;
+
+    --phy: #3366ff;
+    --chem: #00d68f;
+    --bio: #ff3d71;
+    --math: #ffaa00;
+    --mistake: #ff3d71;
+    --iut: #9e1b1b;
+  }
+
+  *{ box-sizing: border-box; transition: all 0.2s ease; }
+  html,body{ margin:0; padding:0; background: var(--bg); color: var(--text); font-family: 'Inter', 'Noto Sans Bengali', sans-serif; }
+  .bn{ font-family: 'Noto Sans Bengali', sans-serif; }
+  .mono{ font-family: 'IBM Plex Mono', monospace; }
+  .wrap{ max-width: 740px; margin: 0 auto; padding: 20px 14px 60px; }
+
+  /* GLOOMY HOVER EFFECTS & CARD DESIGN */
+  .card-style {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  .card-style:hover {
+    border-color: rgba(51, 102, 255, 0.4);
+    box-shadow: 0 6px 20px rgba(51, 102, 255, 0.1);
+    transform: translateY(-2px);
+  }
+
+  header{ text-align: center; margin-bottom: 25px; }
+  .eyebrow{ font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--math); font-weight: 700; text-transform: uppercase; }
+  h1{ font-family: 'Newsreader', serif; font-weight: 700; font-size: 32px; margin: 6px 0; background: linear-gradient(to right, #fff, var(--muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .dream-text { font-size: 14px; color: #ffaa00; font-weight: 600; text-shadow: 0 0 8px rgba(255,170,0,0.2); }
+
+  /* DYNAMIC COUNTDOWN */
+  .countdown-box {
+    background: linear-gradient(135deg, #1a1313, #121624);
+    border: 1px solid #9e1b1b;
+    border-radius: 14px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .timer-display { font-size: 22px; font-weight: 700; color: #ff3d71; letter-spacing: 1px; margin-top: 5px; }
+
+  /* QUOTE SECTION */
+  .quote-box {
+    font-style: italic;
+    color: var(--muted);
+    border-left: 4px solid var(--phy);
+    padding-left: 15px;
+    margin: 15px 0;
+    font-size: 13.5px;
+  }
+
+  /* DASHBOARD & STUDY HOURS */
+  .dash-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 15px; margin-bottom: 20px; }
+  @media(max-width: 550px){ .dash-grid { grid-template-columns: 1fr; } }
+  
+  .ring-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring{
+    width: 100px; height: 100px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(var(--phy) calc(var(--pct) * 1%), var(--border) 0);
+    position: relative; margin-bottom: 10px;
+  }
+  .ring::before{ content: ""; position: absolute; width: 80px; height: 80px; border-radius: 50%; background: var(--card); }
+  .ring-label{ position: relative; font-weight: 600; font-size: 22px; }
+
+  .hours-box { display: flex; flex-direction: column; justify-content: center; }
+  .hours-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .hours-input-row input {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: #fff; padding: 6px 10px; width: 70px; text-align: center; font-size: 14px;
+  }
+  .hours-input-row button {
+    background: var(--phy); color: #fff; border: none; border-radius: 8px;
+    padding: 6px 12px; font-weight: 600; cursor: pointer; font-size: 13px;
+  }
+  .hours-input-row button:hover { background: #5177f6; }
+  .hours-bar-track { height: 8px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: hidden; }
+  .hours-bar-fill { height: 100%; background: var(--chem); width: 0%; }
+
+  .subject-bars{ display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .sbar{ background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .sbar:hover { border-color: var(--muted2); }
+  .sbar-top{ display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12.5px; }
+  .sbar-track{ height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+  .sbar-fill{ height: 100%; }
+
+  /* ACCORDION BOOK */
+  .book{ background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+  .book-head{ display: flex; align-items: center; gap: 12px; padding: 14px; cursor: pointer; user-select: none; }
+  .book-head:hover { background: var(--card-hover); }
+  .領 { width: 16px; height: 16px; color: var(--muted2); }
+  .book.open .領 { transform: rotate(90deg); }
+  .book-title{ flex: 1; }
+  .book-title .name{ font-weight: 600; font-size: 14.5px; }
+  .book-title .count{ font-size: 11.5px; color: var(--muted); }
+
+  .chapters{ display: none; background: rgba(0,0,0,0.1); }
+  .book.open .chapters{ display: block; }
+
+  .chrow-wrapper { border-top: 1px solid var(--border); padding: 12px 14px; }
+  .chrow{ display: flex; align-items: center; gap: 10px; }
+  .chname{ flex: 1; font-size: 13.5px; }
+  .chname.done{ color: var(--muted); text-decoration: line-through; opacity: 0.6; }
+  
+  .tags { display: inline-flex; gap: 4px; margin-left: 6px; }
+  .tag { font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 4px; background: #1f2538; color: var(--muted); }
+  .tag.hot { background: rgba(255, 170, 0, 0.12); color: #ffaa00; border: 1px solid rgba(255, 170, 0, 0.2); }
+
+  .toggles{ display: flex; gap: 4px; }
+  .tbtn{
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    font-size: 11px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 500;
+  }
+  .tbtn:hover { border-color: var(--muted); background: rgba(255,255,255,0.02); }
+  .tbtn.active.c-btn { background: var(--phy); color: #fff; font-weight: 600; border-color: transparent; box-shadow: 0 0 8px rgba(51,66,255,0.3); }
+  .tbtn.active.p-btn { background: var(--chem); color: #000; font-weight: 600; border-color: transparent; box-shadow: 0 0 8px rgba(0,214,143,0.3); }
+  .tbtn.active.m-btn { background: var(--mistake); color: #fff; font-weight: 600; border-color: transparent; box-shadow: 0 0 8px rgba(255,61,113,0.3); }
+
+  /* COMMENT NOTE BOX */
+  .note-area {
+    width: 100%; background: #080a10; border: 1px solid var(--border); border-radius: 8px;
+    color: #ced4da; font-size: 12px; padding: 8px; margin-top: 10px; resize: none;
+    font-family: inherit; display: block;
+  }
+  .note-area:focus { border-color: var(--phy); outline: none; }
+
+  footer{ margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted2); text-align: center;}
+  .reset-link{ color: var(--mistake); border: none; background: none; cursor: pointer; text-decoration: underline; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+  // ---------------- DATA ----------------
+  var SUBJECTS = [
+    { key: 'phy', name: 'পদার্থবিজ্ঞান', accent: '#3366ff', books: [
+        { id: 'phy1', label: '১ম পত্র', chapters: [
+          { n: 'ভৌত জগৎ ও পরিমাপ', t: ['RU'] }, { n: 'ভেক্টর', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'গতিবিদ্যা', t: ['SUST', 'MIST', 'IUT'] }, { n: 'নিউটনীয় বলবিদ্যা', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'কাজ, শক্তি ও ক্ষমতা', t: ['MIST', 'IUT', 'RU'] }, { n: 'মহাকর্ষ ও অভিকর্ষ', t: ['SUST', 'RU'] },
+          { n: 'পদার্থের গাঠনিক ধর্ম', t: ['MIST', 'RU'] }, { n: 'পর্যাবৃত্ত গতি', t: ['SUST', 'IUT'] },
+          { n: 'তরঙ্গ', t: ['SUST', 'RU'] }, { n: 'আদর্শ গ্যাস ও গতিতত্ত্ব', t: ['SUST', 'MIST', 'IUT'], hot: true }
+        ]},
+        { id: 'phy2', label: '২য় পত্র', chapters: [
+          { n: 'তাপগতিবিদ্যা', t: ['SUST', 'IUT', 'MIST'], hot: true }, { n: 'স্থির তড়িৎ', t: ['MIST', 'IUT'] },
+          { n: 'চল তড়িৎ', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'তড়িৎ প্রবাহের চৌম্বক ক্রিয়া', t: ['MIST', 'IUT'] },
+          { n: 'তাড়িতচৌম্বকীয় আবেশ ও AC', t: ['IUT'] }, { n: 'জ্যামিতিক আলোকবিজ্ঞান', t: ['RU', 'MIST'] },
+          { n: 'ভৌত আলোকবিজ্ঞান', t: ['SUST'] }, { n: 'আধুনিক পদার্থবিজ্ঞানের সূচনা', t: ['SUST', 'MIST', 'IUT'], hot: true },
+          { n: 'পরমাণুর মডেল ও নিউক্লিয়ার', t: ['SUST', 'RU'] }, { n: 'সেমিকন্ডাক্টর ও ইলেকট্রনিক্স', t: ['RU', 'MIST'] }, { n: 'জ্যোতির্বিজ্ঞান', t: [] }
+        ]}
+      ]
+    },
+    { key: 'chem', name: 'রসায়ন', accent: '#00d68f', books: [
+        { id: 'chem1', label: '১ম পত্র', chapters: [
+          { n: 'ল্যাবরেটরির নিরাপদ ব্যবহার', t: ['RU'] }, { n: 'গুণগত রসায়ন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'মৌলের পর্যায়বৃত্ত ধর্ম ও বন্ধন', t: ['SUST', 'IUT', 'RU'], hot: true }, { n: 'রাসায়নিক পরিবর্তন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'কর্মমুখী রসায়ন', t: ['RU'] }
+        ]},
+        { id: 'chem2', label: '২য় পত্র', chapters: [
+          { n: 'পরিবেশ রসায়ন', t: ['SUST', 'MIST', 'RU'] }, { n: 'জৈব রসায়ন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'পরিমাণগত রসায়ন', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'তড়িৎ রসায়ন', t: ['MIST', 'IUT'] }, { n: 'অর্থনৈতিক রসায়ন', t: [] }
+        ]}
+      ]
+    },
+    { key: 'math', name: 'উচ্চতর গণিত', accent: '#ffaa00', books: [
+        { id: 'math1', label: '১ম পত্র', chapters: [
+          { n: 'ম্যাট্রিক্স ও নির্ণায়ক', t: ['MIST', 'RU'] }, { n: 'ভেক্টর', t: ['RU'] },
+          { n: 'সরলরেখা', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'বৃত্ত', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true },
+          { n: 'বিন্যাস ও সমাবেশ', t: ['SUST', 'IUT', 'RU'] }, { n: 'ত্রিকোণমিতিক অনুপাত', t: [] },
+          { n: 'সংযুক্ত কোণের ত্রিকোণমিতি', t: ['SUST', 'MIST', 'IUT', 'RU'] }, { n: 'ফাংশন ও লেখচিত্র', t: ['SUST', 'IUT'] },
+          { n: 'অন্তরীকরণ', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'যোগজীকরণ', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }
+        ]},
+        { id: 'math2', label: '২য় পত্র', chapters: [
+          { n: 'বাস্তব সংখ্যা ও অসমতা', t: ['RU'] }, { n: 'যোগাশ্রয়ী প্রোগ্রাম', t: [] }, { n: 'জটিল সংখ্যা', t: ['SUST', 'MIST', 'IUT', 'RU'] },
+          { n: 'বহুপদী ও সমীকরণ', t: ['SUST', 'MIST', 'RU'], hot: true }, { n: 'দ্বিপদী বিস্তৃতি', t: ['RU'] },
+          { n: 'কনিক', t: ['SUST', 'MIST', 'IUT', 'RU'], hot: true }, { n: 'বিপরীত ত্রিকোণমিতি', t: ['MIST', 'IUT'] },
+          { n: 'স্থিতিবিদ্যা', t: ['SUST', 'MIST', 'IUT'], hot: true }, { n: 'গতিবিদ্যা', t: ['SUST', 'MIST', 'IUT'], hot: true },
+          { n: 'বিস্তার পরিমাপ ও সম্ভাবনা', t: ['SUST', 'IUT'] }
+        ]}
+      ]
+    },
+    { key: 'bio', name: 'জীববিজ্ঞান', accent: '#ff3d71', books: [
+        { id: 'bio1', label: '১ম পত্র', chapters: [
+          { n: 'কোষ ও এর গঠন', t: ['RU'] }, { n: 'কোষ বিভাজন', t: ['RU'] }, { n: 'কোষ রসায়ন', t: [] }, { n: 'অণুজীব', t: ['RU'] },
+          { n: 'শৈবাল ও ছত্রাক', t: [] }, { n: 'ব্রায়োফাইটা', t: [] }, { n: 'নগ্নবীজী ও আবৃতবীজী', t: ['RU'] }, { n: 'টিস্যু ও টিস্যুতন্ত্র', t: ['RU'] },
+          { n: 'উদ্ভিদ শারীরতত্ত্ব', t: ['RU', 'SUST'], hot: true }, { n: 'উদ্ভিদ প্রজনন', t: [] }, { n: 'জীবপ্রযুক্তি', t: ['SUST'] }, { n: 'পরিবেশ ও সংরক্ষণ', t: [] }
+        ]},
+        { id: 'bio2', label: '২য় পত্র', chapters: [
+          { n: 'প্রাণীর বিভিন্নতা', t: ['RU'] }, { n: 'প্রাণীর পরিচিতি', t: ['RU'], hot: true }, { n: 'পরিপাক ও শোষণ', t: ['RU'] },
+          { n: 'রক্ত ও সংবহন', t: ['RU'], hot: true }, { n: 'শ্বসন ও শ্বাসক্রিয়া', t: [] }, { n: 'বর্জ্য ও নিষ্কাশন', t: [] },
+          { n: 'চলন ও অঙ্গচালনা', t: ['RU'] }, { n: 'সমন্বয় ও নিয়ন্ত্রণ', t: ['RU'] }, { n: 'মানব জীবনের ধারাবাহিকতা', t: [] },
+          { n: 'মানবদেহের প্রতিরক্ষা', t: ['RU'] }, { n: 'জিনতত্ত্ব ও বিবর্তন', t: ['RU', 'SUST'], hot: true }, { n: 'প্রাণীর আচরণ', t: [] }
+        ]}
+      ]
+    }
+  ];
+
+  var STORAGE_KEY = 'hsc_unbeatable_v3_main';
+  var progress = {}; 
+  var openBooks = {};
+  var studyHours = 0;
+
+  function chapterKey(bookId, idx){ return bookId + '-' + idx; }
+
+  function getState(bookId, idx){
+    return progress[chapterKey(bookId, idx)] || { c:false, p:false, m:false, note:'' };
+  }
+
+  function setState(bookId, idx, field, value){
+    var k = chapterKey(bookId, idx);
+    if(!progress[k]) progress[k] = { c:false, p:false, m:false, note:'' };
+    progress[k][field] = value;
+    saveToStorage();
+  }
+
+  function saveToStorage(){
+    var dataToSave = { progress: progress, studyHours: studyHours };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }
+
+  function getStats(){
+    var totalCheckpoints = 75 * 2; 
+    var clearedCheckpoints = 0;
+    var totalMistakes = 0;
+
+    SUBJECTS.forEach(function(s){
+      s.books.forEach(function(b){
+        b.chapters.forEach(function(_, i){
+          var st = getState(b.id, i);
+          if(st.c) clearedCheckpoints++;
+          if(st.p) clearedCheckpoints++;
+          if(st.m) totalMistakes++;
+        });
+      });
+    });
+
+    var pct = totalCheckpoints ? (clearedCheckpoints / totalCheckpoints * 100) : 0;
+    return { pct: pct, mistakes: totalMistakes, doneCP: clearedCheckpoints, totalCP: totalCheckpoints };
+  }
+
+  function subjectProgress(subj){
+    var total = 0, current = 0;
+    subj.books.forEach(function(b){
+      total += b.chapters.length * 2;
+      b.chapters.forEach(function(_, i){
+        var st = getState(b.id, i);
+        if(st.c) current++;
+        if(st.p) current++;
+      });
+    });
+    return total ? (current / total * 100) : 0;
+  }
+
+  function updateCountdown() {
+    var timerEl = document.getElementById('live-timer');
+    if(!timerEl) return;
+    var targetDate = new Date("December 1, 2026 00:00:00").getTime();
+    var now = new Date().getTime();
+    var diff = targetDate - now;
+
+    if (diff <= 0) {
+      timerEl.innerHTML = "যুদ্ধ শুরু হয়ে গেছে!";
+      return;
+    }
+    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    var secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+    timerEl.innerHTML = days + " দিন " + hours + " ঘণ্টা " + mins + " মিনিট " + secs + " সেকেন্ড";
+  }
+
+  function render(){
+    var app = document.getElementById('app');
+    var stats = getStats();
+    var hourPct = Math.min((studyHours / 12) * 100, 100);
+
+    var html = '';
+    html += '<header>';
+    html += '<div class="eyebrow">Target: Public University 2026 &middot; Second Time Division</div>';
+    html += '<h1 class="bn">মিশন IUT-ian ও পাবলিকিয়ান ট্র্যাকার</h1>';
+    html += '<div class="dream-text bn">🎯 লক্ষ্য: আইইউটি (IUT) সহ সেরা ক্যাম্পাসে একটি সিট নিশ্চিত করা!</div>';
+    html += '</header>';
+
+    // COUNTDOWN BOX
+    html += '<div class="countdown-box bn">';
+    html += '⏳ প্রথম ভর্তি পরীক্ষার সম্ভাব্য ডেডলাইন কাউন্টডাউন (১ ডিসেম্বর টার্গেট):';
+    html += '<div id="live-timer" class="timer-display mono">হিসাব করা হচ্ছে...</div>';
+    html += '</div>';
+
+    // INSPIRED QUOTES
+    html += '<div class="card-style bn">';
+    html += '<div class="quote-box">"সফলতা প্রতিদিনের ছোট ছোট প্রচেষ্টার সমষ্টি, যা ব্যাকলগ না জমিয়ে একটানা করে যেতে হয়।"</div>';
+    html += '<div class="quote-box" style="border-left-color: var(--chem)">"সেকেন্ড টাইমারদের হারাবার কিছু নেই, কিন্তু জেতার জন্য পুরো আকাশ পড়ে আছে। মেক ইট কাউন্ট!"</div>';
+    html += '</div>';
+
+    // DASHBOARD & HOURS TRACKER
+    html += '<div class="dash-grid">';
+    html += '<div class="card-style ring-wrapper">';
+    html += '<div class="ring" style="--pct:'+stats.pct.toFixed(1)+'"><div class="ring-label mono">'+Math.round(stats.pct)+'%</div></div>';
+    html += '<div class="bn" style="font-size:12.5px; color:var(--muted); text-align:center;">সর্বমোট সিলেবাস সম্পন্ন</div>';
+    html += '</div>';
+
+    html += '<div class="card-style hours-box bn">';
+    html += '⏱️ <strong>আজকের স্টাডি আওয়ার ট্র্যাকার:</strong>';
+    html += '<div style="font-size: 13px; color: var(--muted); margin-top:3px;">আজকে মোট পড়া হয়েছে: <span class="mono" style="color:#00d68f; font-size:16px; font-weight:bold;">'+studyHours+'</span> ঘণ্টা (ডেইলি টার্গেট: ১২ ঘণ্টা)</div>';
+    html += '<div class="hours-bar-track"><div class="hours-bar-fill" style="width: '+hourPct+'%"></div></div>';
+    html += '<div class="hours-input-row">';
+    html += '<input type="number" id="hoursInput" min="0" max="24" placeholder="ঘণ্টা">';
+    html += '<button id="saveHoursBtn">আপডেট</button>';
+    html += '</div></div></div>';
+
+    // SUBJECT BARS
+    html += '<div class="subject-bars bn">';
+    SUBJECTS.forEach(function(s){
+      var p = subjectProgress(s);
+      html += '<div class="sbar">';
+      html += '<div class="sbar-top"><span>'+s.name+'</span><span class="mono">'+Math.round(p)+'%</span></div>';
+      html += '<div class="sbar-track"><div class="sbar-fill" style="width:'+p.toFixed(1)+'%; background:'+s.accent+'"></div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // SUBJECT BOOKS & CHAPTERS
+    SUBJECTS.forEach(function(subj, si){
+      subj.books.forEach(function(book, bi){
+        var isOpen = openBooks[book.id] || (si===0 && bi===0);
+        var doneCount = 0;
+        book.chapters.forEach(function(_, i){
+          var st = getState(book.id, i); if(st.c && st.p) doneCount++;
+        });
+
+        html += '<div class="book'+(isOpen?' open':'')+'" data-book="'+book.id+'">';
+        html += '<div class="book-head" data-toggle="'+book.id+'">';
+        html += '<span class="領" style="font-weight:bold; font-size:12px; margin-right:4px;">▶</span>';
+        html += '<div class="book-title bn"><div class="name">'+subj.name+' — '+book.label+'</div>';
+        html += '<div class="count mono">'+doneCount+' / '+book.chapters.length+'টি কমপ্লিট</div></div>';
+        html += '</div>';
+
+        html += '<div class="chapters">';
+        book.chapters.forEach(function(ch, idx){
+          var st = getState(book.id, idx);
+          var isDone = st.c && st.p;
+          
+          html += '<div class="chrow-wrapper">';
+          html += '<div class="chrow">';
+          html += '<span class="chname bn'+(isDone?' done':'')+'">'+ch.n;
+          if(ch.t.length > 0 || ch.hot){
+            html += '<span class="tags">';
+            if(ch.hot) html += '<span class="tag hot">🎯 High Priority</span>';
+            ch.t.forEach(function(tName){ html += '<span class="tag">'+tName+'</span>'; });
+            html += '</span>';
+          }
+          html += '</span>';
+
+          html += '<div class="toggles bn">';
+          html += '<button class="tbtn c-btn'+(st.c?' active':'')+'" data-book="'+book.id+'" data-idx="'+idx+'" data-field="c">ক্লাস</button>';
+          html += '<button class="tbtn p-btn'+(st.p?' active':'')+'" data-book="'+book.id+'" data-idx="'+idx+'" data-field="p">অনুশীলন</button>';
+          html += '<button class="tbtn m-btn'+(st.m?' active':'')+'" data-book="'+book.id+'" data-idx="'+idx+'" data-field="m">📓 ভুল খাতা</button>';
+          html += '</div></div>';
+          
+          // COMMENT/NOTE SECTION
+          html += '<textarea class="note-area" data-book="'+book.id+'" data-idx="'+idx+'" placeholder="এই অধ্যায়ের কোনো শর্টকাট বা গুরুত্বপূর্ণ নোট এখানে রাখো (বাইরে ক্লিক করলে অটো সেভ হবে)...">'+(st.note || '')+'</textarea>';
+          html += '</div>';
+        });
+        html += '</div></div>';
+      });
+    });
+
+    html += '<footer class="bn">';
+    html += '<div>⚠️ প্রস্তুতিতে ফাঁকি দেওয়া যাবে না, জিপিএ নম্বরের ঘাটতি প্র্যাকটিস দিয়ে পুষিয়ে দিতে হবে।</div>';
+    html += '<button class="reset-link" id="resetBtn">সব প্রগেড রিসেট করো</button>';
+    html += '</footer>';
+    
+    app.innerHTML = html;
+    attachHandlers();
+    }
+    
+    function attachHandlers(){
+    document.querySelectorAll('.book-head').forEach(function(h){
+    h.addEventListener('click', function(){
+    var id = h.getAttribute('data-toggle');
+    openBooks[id] = !h.closest('.book').classList.contains('open');
+    render();
+    });
+    });
+    
+    document.querySelectorAll('.tbtn').forEach(function(b){
+    b.addEventListener('click', function(e){
+    e.stopPropagation();
+    var bId = b.getAttribute('data-book');
+    var idx = parseInt(b.getAttribute('data-idx'), 10);
+    var field = b.getAttribute('data-field');
+    var cur = getState(bId, idx);
+    setState(bId, idx, field, !cur[field]);
+    render();
+    });
+    });
+    
+    // NOTE TEXTAREA AUTO SAVE
+    document.querySelectorAll('.note-area').forEach(function(ta){
+    ta.addEventListener('blur', function(){
+    var bId = ta.getAttribute('data-book');
+    var idx = parseInt(ta.getAttribute('data-idx'), 10);
+    setState(bId, idx, 'note', ta.value);
+    });
+    });
+    
+    // HOURS TRACKER BUTTON
+    var hoursBtn = document.getElementById('saveHoursBtn');
+    if(hoursBtn) {
+    hoursBtn.addEventListener('click', function(){
+    var inputVal = parseFloat(document.getElementById('hoursInput').value) || 0;
+    studyHours = Math.max(0, inputVal);
+    saveToStorage();
+    render();
+    });
+    }
+    
+    var rBtn = document.getElementById('resetBtn');
+    if(rBtn){
+    rBtn.addEventListener('click', function(){
+    if(confirm('তুমি কি নিশ্চিত যে সব প্রগ্রেস রিসেট করতে চাও?')){
+    progress = {}; studyHours = 0;
+    localStorage.removeItem(STORAGE_KEY);
+    render();
+    }
+    });
+    }
+    }
+    
+    // INITIALIZATION WITH BUG FIX
+    function init(){
+    try {
+    var stored = localStorage.getItem(STORAGE_KEY);
+    if(stored){
+    var parsed = JSON.parse(stored);
+    progress = parsed.progress || {};
+    studyHours = parsed.studyHours || 0;
+    }
+    } catch(e) {
+    console.log("Storage load fallback active");
+    progress = {};
+    studyHours = 0;
+    }
+    render();
+    setInterval(updateCountdown, 1000);
+    }
+    
+    init();
+    })();
+    </script>
+    </body>
+    </html>
